@@ -15,3 +15,5 @@ build
 
 # Uploads
 static/uploads
+# test_data
+*.data
