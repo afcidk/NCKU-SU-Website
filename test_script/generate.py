@@ -19,7 +19,7 @@ for i in range(data_sum):
   permission = randint(0, 1)
   username = ''.join([chr(randint(65, 91)) for i in range(4)])
 
-  f1.write('{}\t{}\t{}\t{}null\tnull\tfalse\n'.format(ID, bcrypt.hashpw(passwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), permission, username))
+  f1.write('{}\t{}\t{}\ttest@abc.com\t{}\tfalse\tnull\tnull\n'.format(ID, bcrypt.hashpw(passwd.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'), permission, username))
   f2.write('ID: {} passwd: {}\n'.format(ID, passwd))
 
 f1.close()
@@ -37,7 +37,6 @@ def article_rel(name):
 
 article_rel("topNews")
 article_rel("messages")
-article_rel("pollArticles")
 
 ###########################################################################
 print("----generate proposals-----")
@@ -57,13 +56,6 @@ f = open('tags.data', 'w')
 #data_sum = int(input('input number (0=skip): '))
 for i in range(data_sum):
   f.write('null\t{}\n'.format(''.join(choice(word_list) for i in range(5))))
-f.close()
-
-###########################################################################
-print("----generate polls-----")
-f = open('polls.data', 'w')
-for i in range(data_sum):
-    f.write("null\t{}\tnull\tnull\t{}\t{}\n".format(randint(0, 1), randint(1, data_sum), choice(ID_list)))
 f.close()
 
 ###########################################################################
