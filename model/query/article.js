@@ -1,48 +1,52 @@
 const db = require('../sqldb')
-const article = db.article;
-const articleTag = db.articleTag;
-const tag = db.tag;
+const tag = db.models.tag;
 
-function addArticle(student, title, content, vital, tags) {
+function addArticle(vital, data) {
 
-  new Promise( (resolve, reject) => {
-    // add articles
-    db.sequelize.transaction( t => {
-      article.create({
-        studentId: student,
-        title: title,
-        content: content,
-        vital: vital
-      })
-      .then( res => {
-          resolve(res.getDataValue('id'));
-        });
-      });
-    }).then( articleId => {
-  
-    // add tags
-      var cnt = 1;
-      tags.forEach( ele => {
-        tag.findOrCreate({
-          where: {
-            title: ele
-          }
-        })
-        .then( res => {
-          ;
-          db.sequelize.transaction( t => {
-            articleTag.create({
-              articleId: articleId,
-              tagId: res[0].getDataValue('id')
-            })
-            .catch( err => {
-              console.log(err);
-            });
-          })
-        })
-      });
-    });
-  console.log(tags);
+	// Promise array
+	const pa = new Array();
+	
+	const target = vital?db.models.topNews:db.models.message;
+	pa.push(new Promise((resolve, reject) => {
+	  db.sequelize.transaction( t => {
+	  	target.create({
+	  	  studentId: data.studentId,
+	  	  title: data.title,
+	  	  content: data.content
+	  	})
+	  	.then( res => {
+	        // return the articleId
+	  	  resolve(res.getDataValue('id'));
+	    })
+	  })
+  }));
+
+	for (var i=0; i<data.tags.length; ++i) {
+	  pa.push(new Promise((resolve, reject) => {
+		const tag = data.tags[i];
+		db.sequelize.transaction( t => {
+	  	  db.models.tag.findOrCreate({
+	  	    where: { title: tag }
+	  	  })
+		  .then (res => {
+			  resolve(res[0].getDataValue('id'));
+		  });
+		});
+	  }));
+	};
+
+	Promise.all(pa)
+		.then( res => {
+			for (var i=1; i<res.length; ++i) {
+				db.models.articleTag.create({
+					tagId: res[i],
+					newsId: res[0]
+				})
+				.then( res=> {
+					console.log(res.dataValues);
+				});
+			}
+		});
 }
 
 function delArticle(id) {
@@ -55,40 +59,22 @@ function delArticle(id) {
 }
 
 function getArticle(type, sum, offset) {
+	const target = type?db.models.message:db.models.topNews;
   return new Promise( (resolve, reject) => {
-  	article.findAll({
-	  where: {
-	  	vital: type
-	  },
-	  order: ['id'],
-	  offset: start,
-	  limit: sum
-	})
-	.then( res => {
-	  var tmp = [];
-	  res.forEach( ele => {
-		tmp.push(ele.dataValues);
+  	target.findAll({
+	    order: ['id'],
+	    offset: offset,
+	    limit: sum
+	  })
+	  .then( res => {
+	    var tmp = [];
+	    res.forEach( ele => {
+		    tmp.push(ele.dataValues);
+	    });
+	    resolve(tmp);
 	  });
-	  resolve(tmp);
-	});
   });
 }
-
-/* TODO: not this version! */
-function getSum(type) {
-  return new Promise( (resolve, reject) => {
-  	article.count( {
-  		where: {
-  			vital: type
-  		}
-  	})
-  	.then( sum => {
-  		resolve(sum);
-  	});
-  });
-}
-getSum(0).then(res=>{console.log(res)});
-getSum(1).then(res=>{console.log(res)});
 
 function getAccountArticle(student) {
   return new Promise( (resolve, reject) => {
