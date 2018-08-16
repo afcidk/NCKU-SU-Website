@@ -59,7 +59,7 @@ function delArticle(id) {
 }
 
 function getArticle(type, sum, offset) {
-  const target = type?db.models.message:db.models.topNews;
+  const target = type?db.models.topNews:db.models.message;
   return new Promise( (resolve, reject) => {
   	target.findAll({
 	    order: ['id'],
